@@ -30,7 +30,7 @@ def call() {
             stage('Hello') {
                 steps {
                     scripts{
-                    helloPrint()
+                    // helloPrint()
                     }
                 }
             }
