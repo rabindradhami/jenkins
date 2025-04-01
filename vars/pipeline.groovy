@@ -1,4 +1,4 @@
-def call() {
+// def call() {
     pipeline {
         agent any
 
@@ -30,10 +30,10 @@ def call() {
             stage('Hello') {
                 steps {
                     scripts{
-                    // helloPrint()
+                    helloPrint()
                     }
                 }
             }
         }
     }
-}
+// }
