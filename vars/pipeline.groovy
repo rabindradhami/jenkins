@@ -27,13 +27,13 @@
                 }
             }
 
-            stage('Hello') {
-                steps {
-                    scripts{
-                    helloPrint()
-                    }
-                }
-            }
+            // stage('Hello') {
+            //     steps {
+            //         scripts{
+            //         helloPrint()
+            //         }
+            //     }
+            // }
         }
     }
 // }
