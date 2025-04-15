@@ -3,7 +3,7 @@ def call(){
         agent any
 
         environment {
-            IMAGE_NAME = 'test:latest'  // Change this as needed
+            IMAGE_NAME = 'test:latest'
             RUN_BY = ''
         }
 
@@ -11,8 +11,9 @@ def call(){
             stage('Checkout Code') {
                 steps {
                     script {
-                        // Store the user who triggered the job
-                        RUN_BY = currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause).getUserId()
+                        // Get the user who triggered the build
+                        def cause = currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause)
+                        RUN_BY = cause?.getUserId()
                         echo "Job started by: ${RUN_BY}"
                     }
 
@@ -35,20 +36,20 @@ def call(){
             stage('Approval') {
                 steps {
                     script {
-                        def userInput = input(
-                            id: 'approvalInput', message: 'Do you approve this build?', parameters: []
+                        // Prompt for manual approval and collect approver ID manually
+                        def inputData = input(
+                            id: 'approvalInput',
+                            message: 'Do you approve this deployment?',
+                            parameters: [
+                                string(name: 'APPROVER', description: 'Enter your Jenkins username to approve')
+                            ]
                         )
 
-                        def approvalUserId = currentBuild.rawBuild.getAction(org.jenkinsci.plugins.workflow.support.steps.input.InputAction)
-                            .getExecutions()
-                            .find { it.id == 'approvalInput' }
-                            .getApprover()
-                            .getId()
+                        def approver = inputData
+                        echo "Approval given by: ${approver}"
 
-                        echo "Approval given by: ${approvalUserId}"
-
-                        if (approvalUserId == RUN_BY) {
-                            error "Approval cannot be given by the user who started the job."
+                        if (approver == RUN_BY) {
+                            error "Approval cannot be performed by the same user who triggered the job (${RUN_BY})."
                         }
                     }
                 }
