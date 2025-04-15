@@ -6,7 +6,7 @@ def call() {
             stage('Approval Flow') {
                 steps {
                     script {
-                        checkApprovalByDifferentUser()
+                        checkApproval()
                     }
                 }
             }
