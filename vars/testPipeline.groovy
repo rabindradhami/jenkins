@@ -11,7 +11,6 @@ def call() {
             stage('Get Initiator') {
                 steps {
                     script {
-                        // Capture the build initiator
                         wrap([$class: 'BuildUser']) {
                             env.INITIATOR_USER_ID = env.BUILD_USER_ID
                             echo "Initiated by: ${env.INITIATOR_USER_ID} (${env.BUILD_USER})"
@@ -20,29 +19,29 @@ def call() {
                 }
             }
 
-            stage('Wait for Approval') {
+            stage('Approval') {
                 steps {
                     script {
-                        // Manual approval step
-                        input message: 'Do you approve this action?', ok: 'Approve'
+                        // The submitter's Jenkins ID will be assigned to APPROVER_USER_ID
+                        input(
+                            message: 'Do you approve this action?',
+                            ok: 'Approve',
+                            submitterParameter: 'APPROVER_USER_ID'
+                        )
                     }
                 }
             }
 
-            stage('Get Approver') {
+            stage('Validate Approver') {
                 steps {
                     script {
-                        // After input approval, the approver becomes the current BUILD_USER
-                        wrap([$class: 'BuildUser']) {
-                            env.APPROVER_USER_ID = env.BUILD_USER_ID
-                            echo "Approved by: ${env.APPROVER_USER_ID} (${env.BUILD_USER})"
-                        }
+                        echo "Initiator: ${env.INITIATOR_USER_ID}"
+                        echo "Approver : ${env.APPROVER_USER_ID}"
 
-                        // Check if initiator and approver are the same
                         if (env.INITIATOR_USER_ID == env.APPROVER_USER_ID) {
-                            error("Approval failed: Initiator and approver cannot be the same user.")
+                            error("❌ Approval failed: Initiator and approver cannot be the same user.")
                         } else {
-                            echo "Approval successful by a different user."
+                            echo "✅ Approval succeeded: Different user approved the build."
                         }
                     }
                 }
@@ -51,7 +50,7 @@ def call() {
 
         post {
             success {
-                echo "✅ Pipeline succeeded."
+                echo "🎉 Pipeline succeeded."
             }
             failure {
                 echo "❌ Pipeline failed due to same-user approval."
