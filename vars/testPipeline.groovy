@@ -2,18 +2,14 @@ def call() {
     pipeline {
         agent any
 
-        environment {
-            INITIATOR_USER_ID = ''
-            APPROVER_USER_ID  = ''
-        }
-
         stages {
             stage('Get Initiator') {
                 steps {
                     script {
                         wrap([$class: 'BuildUser']) {
-                            env.INITIATOR_USER_ID = env.BUILD_USER_ID
-                            echo "Initiated by: ${env.INITIATOR_USER_ID} (${env.BUILD_USER})"
+                            // Assign to a global variable (not environment) to retain its value
+                            INITIATOR_USER_ID = env.BUILD_USER_ID
+                            echo "Initiated by: ${INITIATOR_USER_ID} (${env.BUILD_USER})"
                         }
                     }
                 }
@@ -22,11 +18,11 @@ def call() {
             stage('Approval') {
                 steps {
                     script {
-                        // The submitter's Jenkins ID will be assigned to APPROVER_USER_ID
-                        input(
+                        // Capture the approver's user ID into a variable
+                        APPROVER_USER_ID = input(
                             message: 'Do you approve this action?',
                             ok: 'Approve',
-                            submitterParameter: 'APPROVER_USER_ID'
+                            submitterParameter: 'APPROVER'
                         )
                     }
                 }
@@ -35,10 +31,10 @@ def call() {
             stage('Validate Approver') {
                 steps {
                     script {
-                        echo "Initiator: ${env.INITIATOR_USER_ID}"
-                        echo "Approver : ${env.APPROVER_USER_ID}"
+                        echo "Initiator: ${INITIATOR_USER_ID}"
+                        echo "Approver : ${APPROVER_USER_ID}"
 
-                        if (env.INITIATOR_USER_ID == env.APPROVER_USER_ID) {
+                        if (INITIATOR_USER_ID == APPROVER_USER_ID) {
                             error("❌ Approval failed: Initiator and approver cannot be the same user.")
                         } else {
                             echo "✅ Approval succeeded: Different user approved the build."
