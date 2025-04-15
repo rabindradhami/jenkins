@@ -1,54 +1,63 @@
 def call() {
     pipeline {
         agent any
-        
+
+        environment {
+            INITIATOR_USER_ID = ''
+            APPROVER_USER_ID  = ''
+        }
+
         stages {
-            stage('Trigger Job') {
+            stage('Get Initiator') {
                 steps {
                     script {
-                        // Wrap with BuildUser to get the user who triggered the build
+                        // Capture the build initiator
                         wrap([$class: 'BuildUser']) {
-                            def initiatorUser = env.BUILD_USER_ID
-                            echo "Job triggered by: ${initiatorUser}"
+                            env.INITIATOR_USER_ID = env.BUILD_USER_ID
+                            echo "Initiated by: ${env.INITIATOR_USER_ID} (${env.BUILD_USER})"
                         }
                     }
                 }
             }
-            
-            stage('Approval Check') {
+
+            stage('Wait for Approval') {
                 steps {
                     script {
-                        // Wrap with BuildUser to get the user who triggered the build
-                        wrap([$class: 'BuildUser']) {
-                            def initiatorUser = env.BUILD_USER_ID
-                            
-                            // Wait for user approval
-                            def approverUser = input message: 'Do you approve this action?', ok: 'Approve'
-                            echo "Approval received from: ${approverUser}"
+                        // Manual approval step
+                        input message: 'Do you approve this action?', ok: 'Approve'
+                    }
+                }
+            }
 
-                            // Compare the initiator and approver
-                            if (initiatorUser == approverUser) {
-                                // If the same user approves, fail the build
-                                currentBuild.result = 'FAILURE'
-                                error("The initiator cannot approve the job.")
-                            } else {
-                                // If a different user approves, succeed the build
-                                currentBuild.result = 'SUCCESS'
-                                echo "Job approved by a different user: ${approverUser}"
-                            }
+            stage('Get Approver') {
+                steps {
+                    script {
+                        // After input approval, the approver becomes the current BUILD_USER
+                        wrap([$class: 'BuildUser']) {
+                            env.APPROVER_USER_ID = env.BUILD_USER_ID
+                            echo "Approved by: ${env.APPROVER_USER_ID} (${env.BUILD_USER})"
+                        }
+
+                        // Check if initiator and approver are the same
+                        if (env.INITIATOR_USER_ID == env.APPROVER_USER_ID) {
+                            error("Approval failed: Initiator and approver cannot be the same user.")
+                        } else {
+                            echo "Approval successful by a different user."
                         }
                     }
                 }
             }
         }
-        
+
         post {
             success {
-                echo 'Job completed successfully!'
+                echo "✅ Pipeline succeeded."
             }
             failure {
-                echo 'Job failed due to same user approval!'
+                echo "❌ Pipeline failed due to same-user approval."
             }
         }
     }
 }
+
+call()
