@@ -23,7 +23,7 @@ pipeline {
         stage('Approval') {
             steps {
                 script {
-                    // Define the function within the same script
+                    // Define the approval function inline
                     def validateApprover = { build, starter ->
                         // Pause for approval
                         input message: 'Please approve this step.'
@@ -39,7 +39,7 @@ pipeline {
                         return approver
                     }
 
-                    // Call the function and validate approval
+                    // Call the function to validate approval
                     def approver = validateApprover(currentBuild, RUN_BY)
                     echo "Approval granted by: ${approver}"
                 }
