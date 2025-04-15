@@ -12,14 +12,14 @@ def call() {
             }
         }
 
-        // post {
-        //     success {
-        //         echo "🎉 Pipeline succeeded."
-        //     }
-        //     failure {
-        //         echo "❌ Pipeline failed due to same-user approval."
-        //     }
-        // }
+        post {
+            success {
+                echo "🎉 Pipeline succeeded."
+            }
+            failure {
+                echo "❌ Pipeline failed due to same-user approval."
+            }
+        }
     }
 }
 
