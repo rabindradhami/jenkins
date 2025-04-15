@@ -1,11 +1,10 @@
-def call(){
+def call() {
     pipeline {
         agent any
 
         environment {
             IMAGE_NAME = 'test:latest'
             RUN_BY = ''
-            APPROVED_BY = ''
         }
 
         stages {
@@ -24,14 +23,18 @@ def call(){
             stage('Approval') {
                 steps {
                     script {
-                        input(
+                        def dummyInput = input(
                             message: 'Do you approve this build?',
                             ok: 'Approve',
-                            submitterParameter: 'APPROVED_BY'
+                            submitterParameter: 'APPROVER_USER'
                         )
+                        def approvedBy = env.APPROVER_USER
 
-                        def approvedBy = env.APPROVED_BY
                         echo "Approval given by: ${approvedBy}"
+
+                        if (!approvedBy) {
+                            error "Could not determine who approved the job."
+                        }
 
                         if (approvedBy == RUN_BY) {
                             error "Approval cannot be done by the same user who started the job (${RUN_BY})."
