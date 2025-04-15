@@ -1,49 +1,54 @@
-def call() {
-    pipeline {
-        agent any
+pipeline {
+    agent any
 
-        environment {
-            IMAGE_NAME = 'test:latest'
-            RUN_BY = ''
-        }
+    environment {
+        IMAGE_NAME = 'test:latest'
+        RUN_BY = ''
+    }
 
-        stages {
-            stage('Checkout Code') {
-                steps {
-                    script {
-                        // Capture the username of the person who started the job
-                        def cause = currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause)
-                        RUN_BY = cause?.userName ?: 'Unknown'
-                        echo "Job started by: ${RUN_BY}"
-                    }
+    stages {
+        stage('Checkout Code') {
+            steps {
+                script {
+                    // Capture the username of the person who started the job
+                    def cause = currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause)
+                    RUN_BY = cause?.userName ?: 'Unknown'
+                    echo "Job started by: ${RUN_BY}"
 
                     git branch: 'main', url: 'https://github.com/rabindradhami/raben-test-repo.git'
                 }
             }
+        }
 
-            stage('Approval') {
-                steps {
-                    script {
+        stage('Approval') {
+            steps {
+                script {
+                    // Define the function within the same script
+                    def validateApprover = { build, starter ->
                         // Pause for approval
                         input message: 'Please approve this step.'
 
-                        // Capture the approver details using the currentBuild causes
-                        def approverCause = currentBuild.rawBuild.getCauses().find { it instanceof org.jenkinsci.plugins.workflow.support.steps.input.InputSubmittedCause }
-                        def APPROVED_BY = approverCause?.userId ?: 'Unknown'
-                        echo "Approval granted by: ${APPROVED_BY}"
+                        // Get the approver's username
+                        def approverCause = build.rawBuild.getCause(hudson.model.Cause$UserIdCause)
+                        def approver = approverCause?.userName ?: 'Unknown'
 
-                        // Validate that the approver is not the job initiator
-                        if (APPROVED_BY == RUN_BY) {
-                            error("The approver (${APPROVED_BY}) cannot be the same as the job initiator (${RUN_BY}).")
+                        // Validate the approver
+                        if (approver == starter) {
+                            error("The approver (${approver}) cannot be the same as the job initiator (${starter}).")
                         }
+                        return approver
                     }
+
+                    // Call the function and validate approval
+                    def approver = validateApprover(currentBuild, RUN_BY)
+                    echo "Approval granted by: ${approver}"
                 }
             }
+        }
 
-            stage('Test') {
-                steps {
-                    echo "Running test stage"
-                }
+        stage('Test') {
+            steps {
+                echo "Running test stage"
             }
         }
     }
