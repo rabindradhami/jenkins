@@ -25,9 +25,11 @@ def call() {
                 steps {
                     script {
                         // Pause for approval
-                        def approver = input message: 'Please approve this step.'
-                        // Capture the approver details
-                        def APPROVED_BY = approver.getUser().toString() ?: 'Unknown'
+                        input message: 'Please approve this step.'
+
+                        // Capture the approver details using the currentBuild causes
+                        def approverCause = currentBuild.rawBuild.getCauses().find { it instanceof org.jenkinsci.plugins.workflow.support.steps.input.InputSubmittedCause }
+                        def APPROVED_BY = approverCause?.userId ?: 'Unknown'
                         echo "Approval granted by: ${APPROVED_BY}"
 
                         // Validate that the approver is not the job initiator
