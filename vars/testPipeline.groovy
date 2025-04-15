@@ -1,55 +1,48 @@
 pipeline {
     agent any
-
-    environment {
-        IMAGE_NAME = 'test:latest'
-        RUN_BY = ''
-    }
-
+    
     stages {
-        stage('Checkout Code') {
+        stage('Trigger Job') {
             steps {
                 script {
-                    // Capture the username of the person who started the job
-                    def cause = currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause)
-                    RUN_BY = cause?.userName ?: 'Unknown'
-                    echo "Job started by: ${RUN_BY}"
-
-                    git branch: 'main', url: 'https://github.com/rabindradhami/raben-test-repo.git'
+                    // Get the user who triggered the job
+                    def initiatorUser = currentBuild.getBuildCauses()[0].userId
+                    echo "Job triggered by: ${initiatorUser}"
                 }
             }
         }
-
-        stage('Approval') {
+        
+        stage('Approval Check') {
             steps {
                 script {
-                    // Define the approval function inline
-                    def validateApprover = { build, starter ->
-                        // Pause for approval
-                        input message: 'Please approve this step.'
+                    // Get the user who triggered the job
+                    def initiatorUser = currentBuild.getBuildCauses()[0].userId
+                    
+                    // Wait for user approval
+                    def approverUser = input message: 'Do you approve this action?', ok: 'Approve'
+                    echo "Approval received from: ${approverUser}"
 
-                        // Get the approver's username
-                        def approverCause = build.rawBuild.getCause(hudson.model.Cause$UserIdCause)
-                        def approver = approverCause?.userName ?: 'Unknown'
-
-                        // Validate the approver
-                        if (approver == starter) {
-                            error("The approver (${approver}) cannot be the same as the job initiator (${starter}).")
-                        }
-                        return approver
+                    // Compare the initiator and approver
+                    if (initiatorUser == approverUser) {
+                        // If the same user approves, fail the build
+                        currentBuild.result = 'FAILURE'
+                        error("The initiator cannot approve the job.")
+                    } else {
+                        // If a different user approves, succeed the build
+                        currentBuild.result = 'SUCCESS'
+                        echo "Job approved by a different user: ${approverUser}"
                     }
-
-                    // Call the function to validate approval
-                    def approver = validateApprover(currentBuild, RUN_BY)
-                    echo "Approval granted by: ${approver}"
                 }
             }
         }
-
-        stage('Test') {
-            steps {
-                echo "Running test stage"
-            }
+    }
+    
+    post {
+        success {
+            echo 'Job completed successfully!'
+        }
+        failure {
+            echo 'Job failed due to same user approval!'
         }
     }
 }
