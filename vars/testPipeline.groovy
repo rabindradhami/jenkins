@@ -1,10 +1,9 @@
-def call(){
+def call() {
     pipeline {
         agent any
 
         environment {
             IMAGE_NAME = 'test:latest'
-            RUN_BY = ''
         }
 
         stages {
@@ -21,28 +20,17 @@ def call(){
                 }
             }
 
-            // stage('Install Docker') {
-            //     steps {
-            //         dockerInstall()
-            //     }
-            // }
-
-            // stage('Build Docker Image') {
-            //     steps {
-            //         dockerBuild(IMAGE_NAME, '.')
-            //     }
-            // }
-
             stage('Approval') {
                 steps {
                     input message: 'Please approve this step.', submitter: 'anotherPerson'
-            }
-            stage('Test'){
-                steps{
-                    echo "Pipeline"
                 }
-            }    
+            }
+
+            stage('Test') {
+                steps {
+                    echo "Test"
+                }
+            }
         }
     }
-}
 }
