@@ -21,17 +21,17 @@ def call(){
                 }
             }
 
-            stage('Install Docker') {
-                steps {
-                    dockerInstall()
-                }
-            }
+            // stage('Install Docker') {
+            //     steps {
+            //         dockerInstall()
+            //     }
+            // }
 
-            stage('Build Docker Image') {
-                steps {
-                    dockerBuild(IMAGE_NAME, '.')
-                }
-            }
+            // stage('Build Docker Image') {
+            //     steps {
+            //         dockerBuild(IMAGE_NAME, '.')
+            //     }
+            // }
 
             stage('Approval') {
                 steps {
