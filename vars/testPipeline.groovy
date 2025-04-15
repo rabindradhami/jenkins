@@ -11,7 +11,7 @@ def call(){
             stage('Checkout Code') {
                 steps {
                     script {
-                        // Get the user who triggered the build
+                        // Get the user who started the job
                         def cause = currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause)
                         RUN_BY = cause?.getUserId()
                         echo "Job started by: ${RUN_BY}"
@@ -21,35 +21,37 @@ def call(){
                 }
             }
 
-            // stage('Install Docker') {
-            //     steps {
-            //         dockerInstall()
-            //     }
-            // }
+            stage('Install Docker') {
+                steps {
+                    dockerInstall()
+                }
+            }
 
-            // stage('Build Docker Image') {
-            //     steps {
-            //         dockerBuild(IMAGE_NAME, '.')
-            //     }
-            // }
+            stage('Build Docker Image') {
+                steps {
+                    dockerBuild(IMAGE_NAME, '.')
+                }
+            }
 
             stage('Approval') {
                 steps {
                     script {
-                        // Prompt for manual approval and collect approver ID manually
-                        def inputData = input(
-                            id: 'approvalInput',
-                            message: 'Do you approve this deployment?',
-                            parameters: [
-                                string(name: 'APPROVER', description: 'Enter your Jenkins username to approve')
-                            ]
-                        )
+                        // Show approval input, no params
+                        input(id: 'approvalInput', message: 'Do you approve this build?')
 
-                        def approver = inputData
-                        echo "Approval given by: ${approver}"
+                        // Now safely fetch the approver
+                        def inputAction = currentBuild.rawBuild.getAction(org.jenkinsci.plugins.workflow.support.steps.input.InputAction)
+                        def inputExecution = inputAction?.executions?.find { it.id == 'approvalInput' }
+                        def approverId = inputExecution?.approver?.id
 
-                        if (approver == RUN_BY) {
-                            error "Approval cannot be performed by the same user who triggered the job (${RUN_BY})."
+                        if (!approverId) {
+                            error "Could not determine approver. Make sure a user clicked the Proceed button."
+                        }
+
+                        echo "Approval given by: ${approverId}"
+
+                        if (approverId == RUN_BY) {
+                            error "Approval cannot be done by the same user who started the job (${RUN_BY})."
                         }
                     }
                 }
