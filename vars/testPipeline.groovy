@@ -1,4 +1,4 @@
-def call() {
+def call(){
     pipeline {
         agent any
 
@@ -11,6 +11,7 @@ def call() {
             stage('Checkout Code') {
                 steps {
                     script {
+                        // Get the user who started the job (username)
                         def cause = currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause)
                         RUN_BY = cause?.userName
                         echo "Job started by: ${RUN_BY}"
@@ -20,28 +21,22 @@ def call() {
                 }
             }
 
-            stage('Approval') {
-                steps {
-                    script {
-                        def dummyInput = input(
-                            message: 'Do you approve this build?',
-                            ok: 'Approve',
-                            submitterParameter: 'APPROVER_USER'
-                        )
-                        def approvedBy = env.APPROVER_USER
+            // stage('Install Docker') {
+            //     steps {
+            //         dockerInstall()
+            //     }
+            // }
 
-                        echo "Approval given by: ${approvedBy}"
+            // stage('Build Docker Image') {
+            //     steps {
+            //         dockerBuild(IMAGE_NAME, '.')
+            //     }
+            // }
 
-                        if (!approvedBy) {
-                            error "Could not determine who approved the job."
-                        }
-
-                        if (approvedBy == RUN_BY) {
-                            error "Approval cannot be done by the same user who started the job (${RUN_BY})."
-                        }
-                    }
-                }
-            }
+         stage('Approval') {
+            steps {
+                input message: 'Please approve this step.', submitter: 'anotherPerson'
+            }    
         }
     }
 }
