@@ -14,7 +14,7 @@ def call() {
                     script {
                         // Capture the username of the person who started the job
                         def cause = currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause)
-                        RUN_BY = cause?.userName
+                        RUN_BY = cause?.userName ?: 'Unknown'
                         echo "Job started by: ${RUN_BY}"
                     }
 
@@ -25,12 +25,11 @@ def call() {
             stage('Approval') {
                 steps {
                     script {
-                        // Use input step to wait for approval
+                        // Pause for approval
                         input message: 'Please approve this step.'
 
                         // Capture the username of the approver
-                        def approverCause = currentBuild.rawBuild.getCause(org.jenkinsci.plugins.workflow.support.steps.input.InputSubmittedCause)
-                        APPROVED_BY = approverCause?.userId
+                        APPROVED_BY = currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause)?.userName ?: 'Unknown'
                         echo "Approval granted by: ${APPROVED_BY}"
 
                         // Validate that the approver is not the job initiator
