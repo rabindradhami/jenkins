@@ -12,7 +12,6 @@ def call() {
     stage('Approval') {
         approverUserId = input(
             message: 'Does the diff look correct?',
-            ok: 'Approve',
             submitterParameter: 'APPROVER'
         )
     }
