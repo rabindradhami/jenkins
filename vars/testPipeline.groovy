@@ -11,9 +11,9 @@ def call(){
             stage('Checkout Code') {
                 steps {
                     script {
-                        // Get the user who started the job
+                        // Get the user who started the job (username)
                         def cause = currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause)
-                        RUN_BY = cause?.getUserId()
+                        RUN_BY = cause?.userName
                         echo "Job started by: ${RUN_BY}"
                     }
 
@@ -36,21 +36,20 @@ def call(){
             stage('Approval') {
                 steps {
                     script {
-                        // Show approval input, no params
                         input(id: 'approvalInput', message: 'Do you approve this build?')
 
-                        // Now safely fetch the approver
+                        // Safely fetch the approver's display name
                         def inputAction = currentBuild.rawBuild.getAction(org.jenkinsci.plugins.workflow.support.steps.input.InputAction)
                         def inputExecution = inputAction?.executions?.find { it.id == 'approvalInput' }
-                        def approverId = inputExecution?.approver?.id
+                        def approverName = inputExecution?.approver?.name
 
-                        if (!approverId) {
+                        if (!approverName) {
                             error "Could not determine approver. Make sure a user clicked the Proceed button."
                         }
 
-                        echo "Approval given by: ${approverId}"
+                        echo "Approval given by: ${approverName}"
 
-                        if (approverId == RUN_BY) {
+                        if (approverName == RUN_BY) {
                             error "Approval cannot be done by the same user who started the job (${RUN_BY})."
                         }
                     }
