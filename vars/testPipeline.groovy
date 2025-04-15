@@ -5,7 +5,6 @@ def call() {
         environment {
             IMAGE_NAME = 'test:latest'
             RUN_BY = ''
-            APPROVED_BY = ''
         }
 
         stages {
@@ -26,10 +25,9 @@ def call() {
                 steps {
                     script {
                         // Pause for approval
-                        input message: 'Please approve this step.'
-
-                        // Capture the username of the approver
-                        APPROVED_BY = currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause)?.userName ?: 'Unknown'
+                        def approver = input message: 'Please approve this step.'
+                        // Capture the approver details
+                        def APPROVED_BY = approver.getUser().toString() ?: 'Unknown'
                         echo "Approval granted by: ${APPROVED_BY}"
 
                         // Validate that the approver is not the job initiator
