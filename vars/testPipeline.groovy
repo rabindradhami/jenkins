@@ -33,9 +33,14 @@ def call(){
             //     }
             // }
 
-         stage('Approval') {
-            steps {
-                input message: 'Please approve this step.', submitter: 'anotherPerson'
+            stage('Approval') {
+                steps {
+                    input message: 'Please approve this step.', submitter: 'anotherPerson'
+            }
+            stage('Test'){
+                steps{
+                    echo "Pipeline"
+                }
             }    
         }
     }
