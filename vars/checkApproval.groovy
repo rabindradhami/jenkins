@@ -1,6 +1,7 @@
 def call() {
     def initiatorUserId
     def approverUserId
+    def bypassUsers = ['hero']
 
     // Get initiator user
     wrap([$class: 'BuildUser']) {
@@ -18,9 +19,9 @@ def call() {
     echo "Initiator: ${initiatorUserId}"
     echo "Approver : ${approverUserId}"
 
-    if (initiatorUserId == approverUserId) {
-        error("Approval failed: Initiator and approver cannot be the same user.")
+    if (initiatorUserId == approverUserId && !bypassUsers.contains(initiatorUserId)) {
+        error("Approval failed: Initiator and approver cannot be the same user (unless whitelisted).")
     } else {
-        echo "Approval succeeded: Different user approved the build."
+        echo "Approval succeeded."
     }
 }
