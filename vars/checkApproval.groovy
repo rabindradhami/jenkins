@@ -1,7 +1,7 @@
 def call() {
     def initiatorUserId
     def approverUserId
-    def bypassUsers = ['hero']
+    def bypassUsers = ['raben']
 
     // Get initiator user
     wrap([$class: 'BuildUser']) {
